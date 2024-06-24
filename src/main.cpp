@@ -4,7 +4,6 @@
 #include "main.h"
 
 #include <LovyanGFX.hpp>
-#include "CST816D.h"
 
 #include <lvgl.h>
 
@@ -20,7 +19,7 @@ class LGFX : public lgfx::LGFX_Device
   lgfx::Panel_GC9A01 _panel_instance;
   lgfx::Light_PWM _light_instance;
   lgfx::Bus_SPI _bus_instance;
-  // lgfx::Touch_CST816S _touch_instance;
+  lgfx::Touch_CST816S _touch_instance;
 
 public:
   LGFX(void)
@@ -86,26 +85,26 @@ public:
       _panel_instance.setLight(&_light_instance); // Sets the backlight to the panel.
     }
 
-    // {                           // タッチスクリーン制御の設定を行います。（必要なければ削除）
-    //   auto cfg = _touch_instance.config();
+    {                           // タッチスクリーン制御の設定を行います。（必要なければ削除）
+      auto cfg = _touch_instance.config();
 
-    //   cfg.x_min = 0;           // タッチスクリーンから得られる最小のX値(生の値)
-    //   cfg.x_max = 240;         // タッチスクリーンから得られる最大のX値(生の値)
-    //   cfg.y_min = 0;           // タッチスクリーンから得られる最小のY値(生の値)
-    //   cfg.y_max = 240;         // タッチスクリーンから得られる最大のY値(生の値)
-    //   cfg.pin_int = TP_INT;        // INTが接続されているピン番号
-    //   // cfg.pin_rst = TP_RST;
-    //   cfg.bus_shared = true;   // 画面と共通のバスを使用している場合 trueを設定
-    //   cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
-    //   cfg.i2c_port = 1;        // 使用するI2Cを選択 (0 or 1)
-    //   cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
-    //   cfg.pin_sda = I2C_SDA;        // SDAが接続されているピン番号
-    //   cfg.pin_scl = I2C_SCL;        // SCLが接続されているピン番号
-    //   cfg.freq = 100000;       // I2Cクロックを設定
+      cfg.x_min = 0;           // タッチスクリーンから得られる最小のX値(生の値)
+      cfg.x_max = 240;         // タッチスクリーンから得られる最大のX値(生の値)
+      cfg.y_min = 0;           // タッチスクリーンから得られる最小のY値(生の値)
+      cfg.y_max = 240;         // タッチスクリーンから得られる最大のY値(生の値)
+      cfg.pin_int = TP_INT;        // INTが接続されているピン番号
+      // cfg.pin_rst = TP_RST;
+      cfg.bus_shared = false;   // 画面と共通のバスを使用している場合 trueを設定
+      cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
+      cfg.i2c_port = 0;        // 使用するI2Cを選択 (0 or 1)
+      cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
+      cfg.pin_sda = I2C_SDA;        // SDAが接続されているピン番号
+      cfg.pin_scl = I2C_SCL;        // SCLが接続されているピン番号
+      cfg.freq = 400000;       // I2Cクロックを設定
 
-    //   _touch_instance.config(cfg);
-    //   _panel_instance.setTouch(&_touch_instance); // タッチスクリーンをパネルにセットします。
-    // }
+      _touch_instance.config(cfg);
+      _panel_instance.setTouch(&_touch_instance); // タッチスクリーンをパネルにセットします。
+    }
 
     setPanel(&_panel_instance); // 使用するパネルをセットします。
     
@@ -113,7 +112,6 @@ public:
 };
 
 LGFX tft;
-CST816D touch(I2C_SDA, I2C_SCL, TP_RST, TP_INT);
 
 static const uint32_t screenWidth = WIDTH;
 static const uint32_t screenHeight = HEIGHT;
@@ -145,8 +143,7 @@ void my_touchpad_read_2(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   uint8_t gesture;
   uint16_t touchX, touchY;
 
-  // touched = tft.getTouch(&touchX, &touchY);
-  touched = touch.getTouch(&touchX, &touchY, &gesture);
+  touched = tft.getTouch(&touchX, &touchY);
 
 
   if (!touched)
@@ -174,8 +171,6 @@ void setup()
   tft.initDMA();
   tft.startWrite();
   tft.fillScreen(TFT_BLACK);
-
-  touch.begin();
 
   lv_init();
 

@@ -1,6 +1,6 @@
 /**
  * @file lv_conf.h
- * Configuration file for v8.3.3
+ * Configuration file for v8.3.0
  */
 
 /*
@@ -36,7 +36,7 @@
 
 /* Adjust color mix functions rounding. GPUs might calculate color mix (blending) differently.
  * 0: round down, 64: round up from x.75, 128: round up from half, 192: round up from x.25, 254: round up */
-#define LV_COLOR_MIX_ROUND_OFS 0
+#define LV_COLOR_MIX_ROUND_OFS 128
 
 /*Images pixels with this color will not be drawn if they are chroma keyed)*/
 #define LV_COLOR_CHROMA_KEY lv_color_hex(0x00ff00)         /*pure green*/
@@ -46,13 +46,12 @@
  *=========================*/
 
 /*1: use custom malloc/free, 0: use the built-in `lv_mem_alloc()` and `lv_mem_free()`*/
-// #define LV_MEM_CUSTOM 0
+#define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
-    //#define LV_MEM_SIZE (192U*1024U)          /*[bytes]*/
-    #define LV_MEM_SIZE (128U*1024U)
+    #define LV_MEM_SIZE (96U * 1024U)          /*[bytes]*/
 
-/*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
+    /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
     #define LV_MEM_ADR 0     /*0: unused*/
     /*Instead of an address give a memory allocator that will be called to get a memory pool for LVGL. E.g. my_malloc*/
     #if LV_MEM_ADR == 0
@@ -79,14 +78,14 @@
  *====================*/
 
 /*Default display refresh period. LVG will redraw changed areas with this period time*/
-#define LV_DISP_DEF_REFR_PERIOD 20      /*[ms]*/
+#define LV_DISP_DEF_REFR_PERIOD 30      /*[ms]*/
 
 /*Input device read period in milliseconds*/
-#define LV_INDEV_DEF_READ_PERIOD 20     /*[ms]*/
+#define LV_INDEV_DEF_READ_PERIOD 30     /*[ms]*/
 
 /*Use a custom tick source that tells the elapsed time in milliseconds.
  *It removes the need to manually update the tick with `lv_tick_inc()`)*/
-// #define LV_TICK_CUSTOM 0
+#define LV_TICK_CUSTOM 1
 #if LV_TICK_CUSTOM
     #define LV_TICK_CUSTOM_INCLUDE "Arduino.h"         /*Header for the system time function*/
     #define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())    /*Expression evaluating to current system time in ms*/
@@ -142,7 +141,7 @@
  *With complex image decoders (e.g. PNG or JPG) caching can save the continuous open/decode of images.
  *However the opened images might consume additional RAM.
  *0: to disable caching*/
-#define LV_IMG_CACHE_DEF_SIZE 256
+#define LV_IMG_CACHE_DEF_SIZE 0
 
 /*Number of stops allowed per gradient. Increase this to allow more stops.
  *This adds (sizeof(lv_color_t) + 1) bytes per additional stop*/
@@ -220,7 +219,7 @@
  *-----------*/
 
 /*Enable the log module*/
-#define LV_USE_LOG 1
+#define LV_USE_LOG 0
 #if LV_USE_LOG
 
     /*How important log should be added:
@@ -291,7 +290,7 @@
     #define lv_snprintf  snprintf
     #define lv_vsnprintf vsnprintf
 #else   /*LV_SPRINTF_CUSTOM*/
-    #define LV_SPRINTF_USE_FLOAT 0
+    #define LV_SPRINTF_USE_FLOAT 1
 #endif  /*LV_SPRINTF_CUSTOM*/
 
 #define LV_USE_USER_DATA 1
@@ -352,7 +351,7 @@
 /*Montserrat fonts with ASCII range and some symbols using bpp = 4
  *https://fonts.google.com/specimen/Montserrat*/
 #define LV_FONT_MONTSERRAT_8  0
-#define LV_FONT_MONTSERRAT_10 0
+#define LV_FONT_MONTSERRAT_10 1
 #define LV_FONT_MONTSERRAT_12 1
 #define LV_FONT_MONTSERRAT_14 1
 #define LV_FONT_MONTSERRAT_16 1
@@ -360,24 +359,24 @@
 #define LV_FONT_MONTSERRAT_20 1
 #define LV_FONT_MONTSERRAT_22 1
 #define LV_FONT_MONTSERRAT_24 1
-#define LV_FONT_MONTSERRAT_26 0
-#define LV_FONT_MONTSERRAT_28 0
+#define LV_FONT_MONTSERRAT_26 1
+#define LV_FONT_MONTSERRAT_28 1
 #define LV_FONT_MONTSERRAT_30 1
-#define LV_FONT_MONTSERRAT_32 0
-#define LV_FONT_MONTSERRAT_34 0
+#define LV_FONT_MONTSERRAT_32 1
+#define LV_FONT_MONTSERRAT_34 1
 #define LV_FONT_MONTSERRAT_36 0
 #define LV_FONT_MONTSERRAT_38 1
-#define LV_FONT_MONTSERRAT_40 0
+#define LV_FONT_MONTSERRAT_40 1
 #define LV_FONT_MONTSERRAT_42 0
-#define LV_FONT_MONTSERRAT_44 0
-#define LV_FONT_MONTSERRAT_46 1
+#define LV_FONT_MONTSERRAT_44 1
+#define LV_FONT_MONTSERRAT_46 0
 #define LV_FONT_MONTSERRAT_48 1
 
 /*Demonstrate special features*/
 #define LV_FONT_MONTSERRAT_12_SUBPX      0
 #define LV_FONT_MONTSERRAT_28_COMPRESSED 0  /*bpp = 3*/
 #define LV_FONT_DEJAVU_16_PERSIAN_HEBREW 0  /*Hebrew, Arabic, Persian letters and all their forms*/
-#define LV_FONT_SIMSUN_16_CJK            1  /*1000 most common CJK radicals*/
+#define LV_FONT_SIMSUN_16_CJK            0  /*1000 most common CJK radicals*/
 
 /*Pixel perfect monospace fonts*/
 #define LV_FONT_UNSCII_8  0
@@ -389,7 +388,7 @@
 #define LV_FONT_CUSTOM_DECLARE
 
 /*Always set a default font*/
-#define LV_FONT_DEFAULT &lv_font_montserrat_14
+#define LV_FONT_DEFAULT &lv_font_montserrat_16
 
 /*Enable handling large font and/or fonts with a lot of characters.
  *The limit depends on the font size, font face and bpp.
@@ -592,6 +591,10 @@
 /*A layout similar to Grid in CSS.*/
 #define LV_USE_GRID 1
 
+#define LV_USE_FS_IO 1
+#define LV_USE_FS_IF 1
+#define LV_USE_FS_SPIFFS 1
+
 /*---------------------
  * 3rd party libraries
  *--------------------*/
@@ -609,7 +612,7 @@
 /*API for open, read, etc*/
 #define LV_USE_FS_POSIX 0
 #if LV_USE_FS_POSIX
-    #define LV_FS_POSIX_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+    #define LV_FS_POSIX_LETTER 'A'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
     #define LV_FS_POSIX_PATH ""         /*Set the working directory. File/directory paths will be appended to it.*/
     #define LV_FS_POSIX_CACHE_SIZE 0    /*>0 to cache this number of bytes in lv_fs_read()*/
 #endif
@@ -625,8 +628,8 @@
 /*API for FATFS (needs to be added separately). Uses f_open, f_read, etc*/
 #define LV_USE_FS_FATFS 0
 #if LV_USE_FS_FATFS
-    #define LV_FS_FATFS_LETTER 'S'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
-    #define LV_FS_FATFS_CACHE_SIZE 512    /*>0 to cache this number of bytes in lv_fs_read()*/
+    #define LV_FS_FATFS_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+    #define LV_FS_FATFS_CACHE_SIZE 0    /*>0 to cache this number of bytes in lv_fs_read()*/
 #endif
 
 /*PNG decoder library*/
@@ -643,7 +646,7 @@
 #define LV_USE_GIF 0
 
 /*QR code library*/
-#define LV_USE_QRCODE 1
+#define LV_USE_QRCODE 0
 
 /*FreeType library*/
 #define LV_USE_FREETYPE 0
