@@ -85,21 +85,21 @@ public:
       _panel_instance.setLight(&_light_instance); // Sets the backlight to the panel.
     }
 
-    {                           // タッチスクリーン制御の設定を行います。（必要なければ削除）
+    { // タッチスクリーン制御の設定を行います。（必要なければ削除）
       auto cfg = _touch_instance.config();
 
-      cfg.x_min = 0;           // タッチスクリーンから得られる最小のX値(生の値)
-      cfg.x_max = 240;         // タッチスクリーンから得られる最大のX値(生の値)
-      cfg.y_min = 0;           // タッチスクリーンから得られる最小のY値(生の値)
-      cfg.y_max = 240;         // タッチスクリーンから得られる最大のY値(生の値)
-      cfg.pin_int = TP_INT;        // INTが接続されているピン番号
+      cfg.x_min = 0;        // タッチスクリーンから得られる最小のX値(生の値)
+      cfg.x_max = 240;      // タッチスクリーンから得られる最大のX値(生の値)
+      cfg.y_min = 0;        // タッチスクリーンから得られる最小のY値(生の値)
+      cfg.y_max = 240;      // タッチスクリーンから得られる最大のY値(生の値)
+      cfg.pin_int = TP_INT; // INTが接続されているピン番号
       // cfg.pin_rst = TP_RST;
-      cfg.bus_shared = false;   // 画面と共通のバスを使用している場合 trueを設定
+      cfg.bus_shared = false;  // 画面と共通のバスを使用している場合 trueを設定
       cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
       cfg.i2c_port = 0;        // 使用するI2Cを選択 (0 or 1)
       cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
-      cfg.pin_sda = I2C_SDA;        // SDAが接続されているピン番号
-      cfg.pin_scl = I2C_SCL;        // SCLが接続されているピン番号
+      cfg.pin_sda = I2C_SDA;   // SDAが接続されているピン番号
+      cfg.pin_scl = I2C_SCL;   // SCLが接続されているピン番号
       cfg.freq = 400000;       // I2Cクロックを設定
 
       _touch_instance.config(cfg);
@@ -107,7 +107,6 @@ public:
     }
 
     setPanel(&_panel_instance); // 使用するパネルをセットします。
-    
   }
 };
 
@@ -116,27 +115,32 @@ LGFX tft;
 static const uint32_t screenWidth = WIDTH;
 static const uint32_t screenHeight = HEIGHT;
 
-static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf[2][screenWidth * buf_size];
+const unsigned int lvBufferSize = screenWidth * buf_size;
+uint8_t lvBuffer[2][lvBufferSize];
 
 bool touched;
 uint8_t gesture;
 uint16_t touchX, touchY;
 
 /* Display flushing */
-void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *data)
 {
+
+  uint32_t w = lv_area_get_width(area);
+  uint32_t h = lv_area_get_height(area);
+  lv_draw_sw_rgb565_swap(data, w * h);
+
   if (tft.getStartCount() == 0)
   {
     tft.endWrite();
   }
-
-  tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::swap565_t *)&color_p->full);
-  lv_disp_flush_ready(disp); /* tell lvgl that flushing is done */
+  // tft.pushImageDMA(area->x1, area->y1, w, h, (uint16_t*)data);
+  tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (uint16_t *)data);
+  lv_display_flush_ready(display); /* tell lvgl that flushing is done */
 }
 
 /*Read the touchpad*/
-void my_touchpad_read_2(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+void my_touchpad_read(lv_indev_t *dev, lv_indev_data_t *data)
 {
 
   bool touched;
@@ -144,7 +148,6 @@ void my_touchpad_read_2(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   uint16_t touchX, touchY;
 
   touched = tft.getTouch(&touchX, &touchY);
-
 
   if (!touched)
   {
@@ -166,7 +169,6 @@ void setup()
 
   Serial.println("Starting up device");
 
-
   tft.init();
   tft.initDMA();
   tft.startWrite();
@@ -174,24 +176,15 @@ void setup()
 
   lv_init();
 
-  lv_disp_draw_buf_init(&draw_buf, buf[0], buf[1], screenWidth * buf_size);
+  static auto *lvDisplay = lv_display_create(screenWidth, screenHeight);
+  lv_display_set_color_format(lvDisplay, LV_COLOR_FORMAT_RGB565);
+  lv_display_set_flush_cb(lvDisplay, my_disp_flush);
 
-  /*Initialize the display*/
-  static lv_disp_drv_t disp_drv;
-  lv_disp_drv_init(&disp_drv);
-  /*Change the following line to your display resolution*/
-  disp_drv.hor_res = screenWidth;
-  disp_drv.ver_res = screenHeight;
-  disp_drv.flush_cb = my_disp_flush;
-  disp_drv.draw_buf = &draw_buf;
-  lv_disp_drv_register(&disp_drv);
+  lv_display_set_buffers(lvDisplay, lvBuffer[0], lvBuffer[1], lvBufferSize, LV_DISPLAY_RENDER_MODE_PARTIAL);
 
-  /*Initialize the (dummy) input device driver*/
-  static lv_indev_drv_t indev_drv;
-  lv_indev_drv_init(&indev_drv);
-  indev_drv.type = LV_INDEV_TYPE_POINTER;
-  indev_drv.read_cb = my_touchpad_read_2;
-  lv_indev_drv_register(&indev_drv);
+  static auto *lvInput = lv_indev_create();
+  lv_indev_set_type(lvInput, LV_INDEV_TYPE_POINTER);
+  lv_indev_set_read_cb(lvInput, my_touchpad_read);
 
 #ifdef USE_UI
   ui_init();
@@ -215,8 +208,13 @@ void setup()
 
 void loop()
 {
-  lv_timer_handler();
+  static uint32_t lastTick = millis();
+
   delay(5);
+  uint32_t current = millis();
+  lv_tick_inc(current - lastTick); // Update the tick timer. Tick is new for LVGL 9
+  lastTick = current;
+  lv_timer_handler(); // Update the UI-
 
-
+  
 }
